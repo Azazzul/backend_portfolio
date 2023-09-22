@@ -263,6 +263,94 @@ app.delete("/api/projects/:id", (req,res,next) => {
     });
 })
 
+
+app.get('/api/jobs/',(req,res,next) => {
+    const SQL_REQUEST = 'SELECT * FROM JOBS ORDER BY date_fin'; 
+    const params = []
+    db.all(SQL_REQUEST, params, (err, rows) => {
+        if (err) {
+            res.status(400).json({"error":err.message});
+            return;
+        }
+        res.json({
+            "message":"success",
+            "data":rows
+        })
+    })
+});
+
+app.post("/api/jobs/", (req,res,next) => {
+    const errors = [];
+    console.log(req.body)
+    if (!req.body.title){
+        errors.push('No name specified')
+    }
+    if (!req.body.image){
+        errors.push('No image specified')
+    }
+    
+    if (!req.body.job_description){
+        errors.push('No description specified')
+    }
+    if (!req.body.skill){
+        errors.push('No skill specified')
+    }
+    
+    if (!req.body.duration){
+        errors.push('No duration specified')
+    }
+    
+    if (!req.body.date_debut){
+        errors.push('No date_debut specified')
+    }
+    
+    if (!req.body.date_fin){
+        errors.push('No date_fin specified')
+    }
+    if (!req.body.business){
+        errors.push('No client specified')
+    }
+    
+    
+    if (errors.length){
+        res.json({"error" : errors.join(",")})
+        return
+    }
+    const data = {
+        title : req.body.title,
+        image : req.body.image,
+        skill: req.body.skill,
+        duration: req.body.durations,
+        description : req.body.job_description,
+        lien : req.body.link,
+        date_debut : req.body.date_debut,
+        date_fin : req.body.date_fin,
+        business: req.body.business
+    }
+    const  sql = 'INSERT INTO JOBS (title, image, job_description, competences,durations, date_debut,date_fin, business_name) VALUES (?,?,?,?,?,?,?,?)'
+    const params = [
+        data.title,
+        data.image,
+        data.description,
+        data.skill,
+        data.duration,
+        data.date_debut,
+        data.date_fin,
+        data.business
+        ]
+    db.run(sql, params, function (err, result) {
+        if (err){
+            res.status(400).json({"error": err.message})
+            return;
+        }
+        res.json({
+            "message": "success",
+            "data": data,
+            "id" : this.lastID
+        })
+    });
+})
+
 // Default response for any other request
 app.get('*' , function(req, res){
     console.log("ici")

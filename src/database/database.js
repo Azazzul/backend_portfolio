@@ -38,10 +38,24 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             )`,
         (err) => {
             if (err) {
-                console.log(err)
+//                console.log(err)
                 // Table already created
             }
         });  
+
+    db.run(`CREATE TABLE JOBS (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title text,
+        image text,
+        job_description text,
+        competences text,
+        durations text,
+        date_debut text,
+        date_fin text,
+        business_name text,
+        CONSTRAINT name_unique UNIQUE (title)
+        )`
+        , (err) => {if (err) {console.error(err)}} )
     }
 });
 
