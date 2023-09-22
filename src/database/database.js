@@ -26,6 +26,22 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                 db.run(insert, ["Vue3","/src/assets/vue.png","framework frontend"])
             }
         });  
+        db.run(`CREATE TABLE PROJECT (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title text,
+            image text,
+            description text,
+            lien text,
+            dates text,
+            client text,
+            CONSTRAINT name_unique UNIQUE (title)
+            )`,
+        (err) => {
+            if (err) {
+                console.log(err)
+                // Table already created
+            }
+        });  
     }
 });
 
