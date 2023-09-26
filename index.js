@@ -1,10 +1,27 @@
 // Create express app
 const express = require("express")
+// import files
 const app = express()
-const db = require("./src/database/database")
 const cors = require('cors');
 const serverless = require("serverless-http")
 const bodyParser = require("body-parser");
+
+const fs = require('fs');
+const archiver = require('archiver');
+
+// Copier la base de données du répertoire de travail vers /tmp
+const sourceDBPath = './db.sqlite'; // Assurez-vous que le chemin est correct
+const tmpDBPath = '/tmp/db.sqlite';
+
+fs.copyFileSync(sourceDBPath, tmpDBPath);
+console.log('Base de données copiée vers /tmp');
+
+
+// get database
+const db = require("./src/database/database")
+
+
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors())
@@ -368,3 +385,27 @@ app.post('*' , function(req, res){
 
 
 module.exports.handler = serverless(app)
+
+// À la fin de l'exécution, recopier la base de données depuis /tmp vers le package ZIP
+const output = fs.createWriteStream('/tmp/package.zip');
+const archive = archiver('zip', {
+  zlib: { level: 9 } // Niveau de compression maximal
+});
+
+output.on('close', () => {
+  console.log('Package ZIP mis à jour avec la base de données.');
+});
+
+archive.on('error', (err) => {
+  throw err;
+});
+
+archive.pipe(output);
+
+// Ajouter le contenu du répertoire de travail au package ZIP
+archive.directory('./', false);
+
+// Ajouter la base de données depuis /tmp au package ZIP (remplacez le chemin par le vôtre)
+archive.file(tmpDBPath, { name: 'db.sqlite' });
+
+archive.finalize();
