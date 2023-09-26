@@ -12,12 +12,29 @@ const cors = require('cors');
 const serverless = require("serverless-http")
 const bodyParser = require("body-parser");
 const fs = require('fs')
+const loadDatabaseFromS3 = async () => {
+    try {
+        let data = await S3.getObject(params).promise()
+        fs.writeFileSync(localFilePath, data.Body)
+        console.log('Fichier sqlite copié dans /tmp')
+    } catch (err) {
+        console.error("Erreur lors de l'initiation de la BDD")
+    }
+}
 
-try {
-    let data = await S3.getObject(params).promise()
-    fs.writeFileSync(localFilePath, data.Body)
-    console.log('Fichier sqlite copié dans /tmp')
-    
+const updateDatabaserInS3 = async () => {
+    try{
+
+        data = fs.readFileSync(localFilePath);
+        params.Body = data;
+        await S3.putObject(params).promise()
+        console.log('Fichier SQLITE mis a jour dans le S3')
+    } catch (err){
+        console.error("Erreur lors de la mise a jour de la base de données")
+    }
+}
+
+    loadDatabaseFromS3();
     const db = require("./src/database/database")
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(bodyParser.json());
@@ -364,28 +381,22 @@ try {
             })
         });
     })
-    data = fs.readFileSync(localFilePath);
-    params.Body = data;
-    await S3.putObject(params).promise()
-    console.log('Fichier SQLITE mis a jour dans le S3')
-    // Default response for any other request
-    app.get('*' , function(req, res){
-        console.log("ici")
-        res.status(404).json({"error" : "No found"});
-
-        return
-    });
-    app.post('*' , function(req, res){
-        console.log("ici")
-        res.status(404).json({"error" : "Not found"});
-
-        return
-    });
 
 
-} catch (err){
-    console.error(err)
-}
+// Default response for any other request
+app.get('*' , function(req, res){
+    console.log("ici")
+    res.status(404).json({"error" : "No found"});
 
+    return
+});
+app.post('*' , function(req, res){
+    console.log("ici")
+    res.status(404).json({"error" : "Not found"});
+
+    return
+});
+
+updateDatabaserInS3()
 
 module.exports.handler = serverless(app)
